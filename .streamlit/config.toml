@@ -1,0 +1,12 @@
+# Configuracoes basicas do Streamlit. Sao opcionais, mas garantem que o
+# tema e o comportamento sejam consistentes entre o ambiente local e o
+# deploy no Streamlit Community Cloud.
+
+[theme]
+base = "light"
+primaryColor = "#1f77b4"
+
+[server]
+# Mantem a aplicacao acessivel mesmo quando aberta de outra maquina na
+# mesma rede durante o desenvolvimento.
+headless = true

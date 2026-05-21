@@ -1,0 +1,23 @@
+# ============================================================================
+# Dependencias do projeto Tech Challenge - Fase 4 (Predicao de Obesidade)
+# ----------------------------------------------------------------------------
+# Versoes fixadas para garantir reprodutibilidade tanto no ambiente local
+# quanto no Streamlit Community Cloud no momento do deploy.
+# ============================================================================
+
+# Manipulacao e analise de dados
+pandas==2.2.3
+numpy==1.26.4
+
+# Visualizacoes para o notebook e o dashboard analitico
+matplotlib==3.9.2
+seaborn==0.13.2
+plotly==5.24.1
+
+# Modelagem e pre-processamento
+scikit-learn==1.5.2
+category-encoders==2.6.3
+joblib==1.4.2
+
+# Aplicacao web (preditivo + dashboard)
+streamlit==1.39.0

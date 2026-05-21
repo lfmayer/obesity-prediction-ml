@@ -1,0 +1,18 @@
+Tech Challenge - Fase 4 - Predicao de Obesidade
+================================================
+
+Aplicacao Streamlit (preditivo + dashboard analitico):
+<URL_DO_DEPLOY_NO_STREAMLIT_AQUI>
+
+Painel analitico:
+(O painel esta dentro do mesmo app, na pagina "Dashboard Analitico" do
+menu lateral. Use o mesmo link acima.)
+
+Repositorio do projeto no GitHub:
+<URL_DO_REPOSITORIO_GITHUB_AQUI>
+
+Video de apresentacao (4 a 10 minutos):
+<URL_DO_VIDEO_AQUI>
+
+Equipe:
+<NOMES_DOS_INTEGRANTES_AQUI>

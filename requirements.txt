@@ -5,10 +5,6 @@
 # quanto no Streamlit Community Cloud no momento do deploy.
 # ============================================================================
 
-# Manipulacao e analise de dados
-pandas==2.2.3
-numpy==1.26.4
-
 # Visualizacoes para o notebook e o dashboard analitico
 matplotlib==3.9.2
 seaborn==0.13.2
@@ -21,3 +17,7 @@ joblib==1.4.2
 
 # Aplicacao web (preditivo + dashboard)
 streamlit==1.39.0
+
+# Manipulacao e analise de dados
+numpy==1.26.4
+pandas==2.2.3

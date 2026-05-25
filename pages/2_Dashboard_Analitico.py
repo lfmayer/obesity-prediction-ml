@@ -367,53 +367,92 @@ st.divider()
 # -----------------------------------------------------------------------------
 # Historico familiar e meio de transporte
 # -----------------------------------------------------------------------------
-st.subheader("Fatores de contexto: historico familiar e transporte")
+st.subheader("Fatores de contexto: histórico familiar e transporte")
 
-f1, f2 = st.columns(2)
+# --- Gráfico de Histórico Familiar (Ocupando a tela inteira) ---
+df_fh = df_filt.copy()
+fh_labels = {"yes": "Sim", "no": "Não"}
 
-with f1:
-    fh_df = (
-        df_filt.groupby(["family_history", "Obesity"]).size().reset_index(name="Quantidade")
-    )
-    fig_fh = px.bar(
-        fh_df,
-        x="family_history",
-        y="Quantidade",
-        color="Obesity",
-        category_orders={"Obesity": ORDERED_CLASSES},
-        title="Historico familiar de sobrepeso vs nivel de obesidade",
-        labels={"family_history": "Historico familiar?"},
-        color_discrete_sequence=px.colors.sequential.Viridis,
-    )
-    fig_fh.update_layout(barmode="stack", yaxis_title="Pacientes")
-    st.plotly_chart(fig_fh, use_container_width=True)
+# Traduzindo os dados
+df_fh["Historico_Familiar"] = df_fh["family_history"].map(fh_labels)
+df_fh["Classificacao"] = df_fh["Obesity"].map(obesity_labels)
 
-with f2:
-    mt_df = (
-        df_filt.groupby(["MTRANS", "Obesity"]).size().reset_index(name="Quantidade")
-    )
-    fig_mt = px.bar(
-        mt_df,
-        x="MTRANS",
-        y="Quantidade",
-        color="Obesity",
-        category_orders={"Obesity": ORDERED_CLASSES},
-        title="Meio de transporte habitual vs nivel de obesidade",
-        labels={"MTRANS": "Meio de transporte"},
-        color_discrete_sequence=px.colors.sequential.Viridis,
-    )
-    fig_mt.update_layout(barmode="stack", yaxis_title="Pacientes")
-    st.plotly_chart(fig_mt, use_container_width=True)
+# Agrupando os dados limpos
+fh_grouped = df_fh.groupby(["Historico_Familiar", "Classificacao"]).size().reset_index(name="Quantidade")
 
-st.caption(
-    "O historico familiar aparece em alta proporcao nas faixas mais elevadas "
-    "de obesidade, reforcando o fator genetico. O meio de transporte ajuda "
-    "a indicar o nivel de movimentacao no dia a dia: deslocamentos a pe e "
-    "de bicicleta sao menos frequentes nas classes mais graves."
+fig_fh = px.bar(
+    fh_grouped,
+    x="Historico_Familiar",
+    y="Quantidade",
+    color="Classificacao",
+    text="Quantidade", # Adiciona os rótulos numéricos
+    category_orders={
+        "Classificacao": ordered_labels_pt,
+        "Historico_Familiar": ["Não", "Sim"]
+    },
+    title="Histórico familiar de sobrepeso vs Nível de Obesidade",
+    color_discrete_sequence=px.colors.sequential.Viridis
 )
 
-st.divider()
+fig_fh.update_layout(
+    barmode="group", 
+    xaxis_title="Possui Histórico Familiar?",
+    yaxis_title="Número de Pacientes",
+    legend_title="Categoria"
+)
+fig_fh.update_traces(textposition='auto', textfont_size=12, marker_line_width=0)
+st.plotly_chart(fig_fh, use_container_width=True)
 
+st.markdown("<br>", unsafe_allow_html=True) # Adiciona um respiro visual entre os gráficos
+
+# --- Gráfico de Meio de Transporte (Ocupando a tela inteira) ---
+df_mt = df_filt.copy()
+mt_labels = {
+    "Automobile": "Automóvel",
+    "Public_Transportation": "Transporte Público",
+    "Motorbike": "Moto",
+    "Bike": "Bicicleta",
+    "Walking": "A pé"
+}
+
+# Traduzindo os dados
+df_mt["Meio_Transporte"] = df_mt["MTRANS"].map(mt_labels)
+df_mt["Classificacao"] = df_mt["Obesity"].map(obesity_labels)
+
+mt_grouped = df_mt.groupby(["Meio_Transporte", "Classificacao"]).size().reset_index(name="Quantidade")
+
+# Definindo uma ordem lógica para o eixo X (dos motorizados para os ativos)
+ordered_mtrans = ["Automóvel", "Transporte Público", "Moto", "Bicicleta", "A pé"]
+
+fig_mt = px.bar(
+    mt_grouped,
+    x="Meio_Transporte",
+    y="Quantidade",
+    color="Classificacao",
+    text="Quantidade", # Adiciona os rótulos numéricos
+    category_orders={
+        "Classificacao": ordered_labels_pt,
+        "Meio_Transporte": ordered_mtrans
+    },
+    title="Meio de transporte habitual vs Nível de Obesidade",
+    color_discrete_sequence=px.colors.sequential.Viridis
+)
+
+fig_mt.update_layout(
+    barmode="group", 
+    xaxis_title="Meio de Transporte Habitual",
+    yaxis_title="Número de Pacientes",
+    legend_title="Categoria"
+)
+fig_mt.update_traces(textposition='auto', textfont_size=12, marker_line_width=0)
+st.plotly_chart(fig_mt, use_container_width=True)
+
+st.caption(
+    "O histórico familiar aparece em alta proporção nas faixas mais elevadas "
+    "de obesidade, reforçando o fator genético. O meio de transporte ajuda "
+    "a indicar o nível de movimentação no dia a dia: deslocamentos a pé e "
+    "de bicicleta são menos frequentes nas classes mais graves."
+)
 # -----------------------------------------------------------------------------
 # Correlacao numerica
 # -----------------------------------------------------------------------------

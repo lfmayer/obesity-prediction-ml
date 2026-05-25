@@ -533,18 +533,32 @@ else:
 
     # Matriz de confusao do modelo escolhido.
     best_cm = metrics["results_by_model"][metrics["best_model"]]["confusion_matrix"]
-    cm_df = pd.DataFrame(best_cm, index=TARGET_CLASSES, columns=TARGET_CLASSES)
+    
+    # 1. Traduzindo as classes usando o dicionário global que já criamos
+    translated_classes = [obesity_labels.get(c, c) for c in TARGET_CLASSES]
+    
+    cm_df = pd.DataFrame(best_cm, index=translated_classes, columns=translated_classes)
+    
+    # 2. Gerando o gráfico com paleta 'Blues' e aspect='auto'
     fig_cm = px.imshow(
         cm_df,
         text_auto=True,
-        color_continuous_scale="Viridis",
-        title=f"Matriz de confusao - {metrics['best_model']}",
+        color_continuous_scale="Blues", # Deixa o fundo (zeros) branco/claro
+        title=f"Matriz de Confusão - {metrics['best_model']}",
         labels={"x": "Predito", "y": "Real"},
+        aspect="auto" # Permite esticar a matriz
     )
+    
+    # 3. Ajustando a altura para o gráfico ficar imponente
+    fig_cm.update_layout(
+        height=700, 
+        margin=dict(l=0, r=0, t=50, b=0)
+    )
+    
     st.plotly_chart(fig_cm, use_container_width=True)
 
     st.caption(
-        "A matriz de confusao mostra que o modelo erra raramente, e quando "
+        "A matriz de confusão mostra que o modelo erra raramente, e quando "
         "erra, geralmente confunde classes adjacentes (por exemplo Sobrepeso "
-        "I com Sobrepeso II). Esse padrao reduz o risco de erros graves."
+        "I com Sobrepeso II). Esse padrão reduz o risco de erros graves."
     )

@@ -201,44 +201,56 @@ st.divider()
 # -----------------------------------------------------------------------------
 # IMC por classe e por genero
 # -----------------------------------------------------------------------------
-st.subheader("IMC, idade e genero por nivel de obesidade")
+st.subheader("IMC, idade e gênero por nível de obesidade")
+
+# 1. Preparar os dados para este gráfico (tradução)
+df_box = df_filt.copy()
+
+# Usamos o dicionário que já criamos antes para traduzir o eixo X
+df_box["Classificacao"] = df_box["Obesity"].map(obesity_labels)
+
+# Traduzindo a legenda de Gênero
+gender_labels = {"Female": "Feminino", "Male": "Masculino"}
+df_box["Genero"] = df_box["Gender"].map(gender_labels)
+
+# 2. Selecionar cores de alto contraste dentro da Viridis
+# Pegamos a 1ª cor (roxo escuro) e a 7ª cor (verde claro/teal) da lista nativa
+cores_viridis_contraste = [px.colors.sequential.Viridis[0], px.colors.sequential.Viridis[6]]
+
 g1, g2 = st.columns(2)
 
 with g1:
     fig_box_imc = px.box(
-        df_filt,
-        x="Obesity",
+        df_box,
+        x="Classificacao",
         y="imc",
-        color="Gender",
-        category_orders={"Obesity": ORDERED_CLASSES},
-        title="Distribuicao de IMC por classe e genero",
-        color_discrete_sequence=px.colors.sequential.Viridis,
+        color="Genero",
+        category_orders={"Classificacao": ordered_labels_pt},
+        title="Distribuição de IMC por classe e gênero",
+        color_discrete_sequence=cores_viridis_contraste, # <-- Aplicando o contraste
     )
-    fig_box_imc.update_layout(xaxis_title="", yaxis_title="IMC")
+    fig_box_imc.update_layout(xaxis_title="", yaxis_title="IMC", legend_title="Gênero")
     st.plotly_chart(fig_box_imc, use_container_width=True)
 
 with g2:
     fig_box_age = px.box(
-        df_filt,
-        x="Obesity",
+        df_box,
+        x="Classificacao",
         y="Age",
-        color="Gender",
-        category_orders={"Obesity": ORDERED_CLASSES},
-        title="Distribuicao de idade por classe e genero",
-        color_discrete_sequence=px.colors.sequential.Viridis,
+        color="Genero",
+        category_orders={"Classificacao": ordered_labels_pt},
+        title="Distribuição de Idade por classe e gênero",
+        color_discrete_sequence=cores_viridis_contraste, # <-- Aplicando o contraste
     )
-    fig_box_age.update_layout(xaxis_title="", yaxis_title="Idade")
+    fig_box_age.update_layout(xaxis_title="", yaxis_title="Idade", legend_title="Gênero")
     st.plotly_chart(fig_box_age, use_container_width=True)
 
 st.caption(
-    "O IMC eh fortemente correlacionado com a classe alvo, como esperado, "
-    "ja que o calculo deriva de peso e altura. A distribuicao por idade "
-    "mostra que adultos mais velhos tendem a aparecer com mais frequencia "
+    "O IMC é fortemente correlacionado com a classe alvo, como esperado, "
+    "já que o cálculo deriva de peso e altura. A distribuição por idade "
+    "mostra que adultos mais velhos tendem a aparecer com mais frequência "
     "nas classes de obesidade."
 )
-
-st.divider()
-
 # -----------------------------------------------------------------------------
 # Habitos vs obesidade
 # -----------------------------------------------------------------------------

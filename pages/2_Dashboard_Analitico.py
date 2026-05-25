@@ -90,9 +90,6 @@ def load_metrics_report():
 df = load_dataset()
 metrics = load_metrics_report()
 
-# -----------------------------------------------------------------------------
-# Variaveis Globais e Dicionarios de Traducao
-# -----------------------------------------------------------------------------
 # Define ordem fixa para as classes nos graficos (do mais leve ao mais grave).
 ORDERED_CLASSES = [
     "Insufficient_Weight",
@@ -104,37 +101,17 @@ ORDERED_CLASSES = [
     "Obesity_Type_III",
 ]
 
-# Dicionários de tradução comuns para todo o painel
-obesity_labels = {
-    "Insufficient_Weight": "Abaixo do Peso",
-    "Normal_Weight": "Peso Normal",
-    "Overweight_Level_I": "Sobrepeso I",
-    "Overweight_Level_II": "Sobrepeso II",
-    "Obesity_Type_I": "Obesidade Grau I",
-    "Obesity_Type_II": "Obesidade Grau II",
-    "Obesity_Type_III": "Obesidade Grau III"
-}
-ordered_labels_pt = [obesity_labels[c] for c in ORDERED_CLASSES]
-
 
 # -----------------------------------------------------------------------------
 # Filtros laterais
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.header("Filtros")
-    
-    # 1. Dicionários rápidos para traduzir a interface dos filtros
-    gender_labels = {"Female": "Feminino", "Male": "Masculino"}
-    fh_labels = {"yes": "Sim", "no": "Não"}
-
-    # 2. Aplicando o format_func para mudar apenas a exibição
     selected_genders = st.multiselect(
-        "Gênero",
+        "Genero",
         options=sorted(df["Gender"].unique()),
         default=sorted(df["Gender"].unique()),
-        format_func=lambda x: gender_labels.get(x, x)
     )
-    
     age_min, age_max = int(df["Age"].min()), int(df["Age"].max())
     age_range = st.slider(
         "Faixa de idade",
@@ -142,27 +119,22 @@ with st.sidebar:
         max_value=age_max,
         value=(age_min, age_max),
     )
-    
     selected_history = st.multiselect(
-        "Histórico familiar de sobrepeso",
+        "Historico familiar de sobrepeso",
         options=sorted(df["family_history"].unique()),
         default=sorted(df["family_history"].unique()),
-        format_func=lambda x: fh_labels.get(x, x)
     )
-    
     selected_classes = st.multiselect(
-        "Níveis de obesidade",
+        "Niveis de obesidade",
         options=ORDERED_CLASSES,
         default=ORDERED_CLASSES,
-        format_func=lambda x: obesity_labels.get(x, x)
     )
-    
     st.caption(
-        "Os filtros se aplicam a todos os gráficos abaixo. Limpe um filtro "
-        "para voltar à base completa."
+        "Os filtros se aplicam a todos os graficos abaixo. Limpe um filtro "
+        "para voltar a base completa."
     )
 
-# --- TRECHO RECUPERADO: Aplica os filtros escolhidos na sidebar ---
+# Aplica os filtros.
 df_filt = df[
     df["Gender"].isin(selected_genders)
     & df["Age"].between(age_range[0], age_range[1])
@@ -173,7 +145,6 @@ df_filt = df[
 if df_filt.empty:
     st.warning("Nenhum registro corresponde aos filtros selecionados.")
     st.stop()
-# -----------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
@@ -202,42 +173,25 @@ st.divider()
 # -----------------------------------------------------------------------------
 # Distribuicao do alvo
 # -----------------------------------------------------------------------------
-st.subheader("Distribuição da classe alvo")
-
-# 1. Conta os valores mantendo a estrutura original
+st.subheader("Distribuicao da classe alvo")
 class_counts = (
     df_filt["Obesity"].value_counts().reindex(ORDERED_CLASSES).fillna(0).reset_index()
 )
 class_counts.columns = ["Classe", "Quantidade"]
-
-# 2. Traduz as classes para o português usando o dicionário global
-class_counts["Classe"] = class_counts["Classe"].map(obesity_labels)
-
 fig_classes = px.bar(
     class_counts,
     x="Classe",
     y="Quantidade",
     text="Quantidade",
-    title="Quantidade de pacientes por nível de obesidade",
+    title="Quantidade de pacientes por nivel de obesidade",
     color="Classe",
-    category_orders={"Classe": ordered_labels_pt}, # Garante a ordem visual correta
-    color_discrete_sequence=px.colors.sequential.Viridis,
+    color_discrete_sequence=px.colors.qualitative.Safe,
 )
-
-fig_classes.update_traces(textposition="outside", marker_line_width=0)
-
-# 3. Ajuste do Layout: bargap para afinar as barras
-fig_classes.update_layout(
-    showlegend=False, 
-    xaxis_title="", 
-    yaxis_title="Pacientes",
-    bargap=0.4  # <-- Aumenta o espaço entre barras, deixando-as mais finas
-)
-
+fig_classes.update_traces(textposition="outside")
+fig_classes.update_layout(showlegend=False, xaxis_title="", yaxis_title="Pacientes")
 st.plotly_chart(fig_classes, use_container_width=True)
-
 st.caption(
-    "O dataset é relativamente equilibrado entre as classes, mas vale "
+    "O dataset eh relativamente equilibrado entre as classes, mas vale "
     "observar que pacientes com sobrepeso e obesidade somados representam "
     "a maior parte da amostra."
 )
@@ -247,53 +201,39 @@ st.divider()
 # -----------------------------------------------------------------------------
 # IMC por classe e por genero
 # -----------------------------------------------------------------------------
-st.subheader("IMC, idade e gênero por nível de obesidade")
-
-# 1. Preparar os dados para este gráfico (tradução)
-df_box = df_filt.copy()
-
-# Usamos o dicionário global para traduzir o eixo X
-df_box["Classificacao"] = df_box["Obesity"].map(obesity_labels)
-
-# Traduzindo a legenda de Gênero
-gender_labels = {"Female": "Feminino", "Male": "Masculino"}
-df_box["Genero"] = df_box["Gender"].map(gender_labels)
-
-# 2. Selecionar cores de alto contraste dentro da Viridis
-cores_viridis_contraste = [px.colors.sequential.Viridis[0], px.colors.sequential.Viridis[6]]
-
+st.subheader("IMC, idade e genero por nivel de obesidade")
 g1, g2 = st.columns(2)
 
 with g1:
     fig_box_imc = px.box(
-        df_box,
-        x="Classificacao",
+        df_filt,
+        x="Obesity",
         y="imc",
-        color="Genero",
-        category_orders={"Classificacao": ordered_labels_pt},
-        title="Distribuição de IMC por classe e gênero",
-        color_discrete_sequence=cores_viridis_contraste,
+        color="Gender",
+        category_orders={"Obesity": ORDERED_CLASSES},
+        title="Distribuicao de IMC por classe e genero",
+        color_discrete_sequence=px.colors.qualitative.Pastel,
     )
-    fig_box_imc.update_layout(xaxis_title="", yaxis_title="IMC", legend_title="Gênero")
+    fig_box_imc.update_layout(xaxis_title="", yaxis_title="IMC")
     st.plotly_chart(fig_box_imc, use_container_width=True)
 
 with g2:
     fig_box_age = px.box(
-        df_box,
-        x="Classificacao",
+        df_filt,
+        x="Obesity",
         y="Age",
-        color="Genero",
-        category_orders={"Classificacao": ordered_labels_pt},
-        title="Distribuição de Idade por classe e gênero",
-        color_discrete_sequence=cores_viridis_contraste,
+        color="Gender",
+        category_orders={"Obesity": ORDERED_CLASSES},
+        title="Distribuicao de idade por classe e genero",
+        color_discrete_sequence=px.colors.qualitative.Pastel,
     )
-    fig_box_age.update_layout(xaxis_title="", yaxis_title="Idade", legend_title="Gênero")
+    fig_box_age.update_layout(xaxis_title="", yaxis_title="Idade")
     st.plotly_chart(fig_box_age, use_container_width=True)
 
 st.caption(
-    "O IMC é fortemente correlacionado com a classe alvo, como esperado, "
-    "já que o cálculo deriva de peso e altura. A distribuição por idade "
-    "mostra que adultos mais velhos tendem a aparecer com mais frequência "
+    "O IMC eh fortemente correlacionado com a classe alvo, como esperado, "
+    "ja que o calculo deriva de peso e altura. A distribuicao por idade "
+    "mostra que adultos mais velhos tendem a aparecer com mais frequencia "
     "nas classes de obesidade."
 )
 
@@ -304,76 +244,90 @@ st.divider()
 # -----------------------------------------------------------------------------
 st.subheader("Habitos de vida e nivel de obesidade")
 
-# --- Gráfico de Atividade Física (Ocupando a tela inteira) ---
-df_faf = df_filt.copy()
-faf_labels = {
-    0: "0 (Nenhuma)",
-    1: "1 a 2 dias",
-    2: "3 a 4 dias",
-    3: "5+ dias"
-}
+h1, h2 = st.columns(2)
 
-df_faf["Atividade_Fisica"] = df_faf["FAF"].round().astype(int).map(faf_labels)
-df_faf["Classificacao"] = df_faf["Obesity"].map(obesity_labels)
+with h1:
+    # 1. Dicionários de tradução
+    obesity_labels = {
+        "Insufficient_Weight": "Abaixo do Peso",
+        "Normal_Weight": "Peso Normal",
+        "Overweight_Level_I": "Sobrepeso I",
+        "Overweight_Level_II": "Sobrepeso II",
+        "Obesity_Type_I": "Obesidade Grau I",
+        "Obesity_Type_II": "Obesidade Grau II",
+        "Obesity_Type_III": "Obesidade Grau III"
+    }
 
-faf_grouped = df_faf.groupby(["Atividade_Fisica", "Classificacao"]).size().reset_index(name="Quantidade")
+    faf_labels = {
+        0: "0 (Nenhuma)",
+        1: "1 a 2 dias",
+        2: "3 a 4 dias",
+        3: "5+ dias"
+    }
 
-fig_faf = px.bar(
-    faf_grouped,
-    x="Atividade_Fisica",
-    y="Quantidade",
-    color="Classificacao",
-    text="Quantidade",
-    category_orders={
-        "Classificacao": ordered_labels_pt, 
-        "Atividade_Fisica": list(faf_labels.values())
-    },
-    title="Frequência de Atividade Física vs Nível de Obesidade",
-    color_discrete_sequence=px.colors.sequential.Viridis
-)
+    # 2. Preparação dos dados
+    # Criamos uma cópia para não poluir o df_filt usado nos outros gráficos
+    df_h1 = df_filt.copy()
+    
+    # Arredondamos e mapeamos os valores
+    df_h1["Atividade_Fisica"] = df_h1["FAF"].round().astype(int).map(faf_labels)
+    df_h1["Classificacao"] = df_h1["Obesity"].map(obesity_labels)
 
-fig_faf.update_layout(
-    barmode="group", 
-    xaxis_title="Frequência Semanal",
-    yaxis_title="Número de Pacientes",
-    legend_title="Categoria"
-)
-fig_faf.update_traces(textposition='auto', textfont_size=12, marker_line_width=0)
-st.plotly_chart(fig_faf, use_container_width=True)
+    # Agrupamento usando as categorias já limpas
+    faf_df = df_h1.groupby(["Atividade_Fisica", "Classificacao"]).size().reset_index(name="Quantidade")
 
-st.markdown("<br>", unsafe_allow_html=True)
+    # A lista de ordem usa a constante ORDERED_CLASSES já definida no topo do seu arquivo
+    ordered_labels_pt = [obesity_labels[c] for c in ORDERED_CLASSES]
 
-# --- Gráfico de Consumo Calórico (Ocupando a tela inteira) ---
-df_favc = df_filt.copy()
-favc_labels = {"yes": "Sim", "no": "Não"}
+    # 3. Geração do gráfico
+    fig_faf = px.bar(
+        faf_df,
+        x="Atividade_Fisica",
+        y="Quantidade",
+        color="Classificacao",
+        text="Quantidade", # Adiciona os valores em cada barra
+        category_orders={
+            "Classificacao": ordered_labels_pt, 
+            "Atividade_Fisica": list(faf_labels.values())
+        },
+        title="Frequência de Atividade Física vs Nível de Obesidade",
+        color_discrete_sequence=px.colors.sequential.Viridis
+    )
 
-df_favc["Consumo_Calorico"] = df_favc["FAVC"].map(favc_labels)
-df_favc["Classificacao"] = df_favc["Obesity"].map(obesity_labels)
+    # 4. Ajustes de layout e formatação das barras
+    fig_faf.update_layout(
+        barmode="group", 
+        xaxis_title="Frequência Semanal",
+        yaxis_title="Número de Pacientes",
+        legend_title="Categoria"
+    )
 
-favc_grouped = df_favc.groupby(["Consumo_Calorico", "Classificacao"]).size().reset_index(name="Quantidade")
+    fig_faf.update_traces(
+        textposition='auto',
+        textfont_size=12,
+        marker_line_width=0 # Deixa a barra "lisa"
+    )
 
-fig_favc = px.bar(
-    favc_grouped,
-    x="Consumo_Calorico",
-    y="Quantidade",
-    color="Classificacao",
-    text="Quantidade",
-    category_orders={
-        "Classificacao": ordered_labels_pt, 
-        "Consumo_Calorico": ["Não", "Sim"]
-    },
-    title="Consumo frequente de alimentos calóricos vs Nível de Obesidade",
-    color_discrete_sequence=px.colors.sequential.Viridis
-)
-
-fig_favc.update_layout(
-    barmode="group", 
-    xaxis_title="Consumo Frequente?",
-    yaxis_title="Número de Pacientes",
-    legend_title="Categoria"
-)
-fig_favc.update_traces(textposition='auto', textfont_size=12, marker_line_width=0)
-st.plotly_chart(fig_favc, use_container_width=True)
+    # 5. Renderização no Streamlit
+    st.plotly_chart(fig_faf, use_container_width=True)
+    
+with h2:
+    # Proporcao de obesidade por consumo calorico frequente (FAVC).
+    favc_df = (
+        df_filt.groupby(["FAVC", "Obesity"]).size().reset_index(name="Quantidade")
+    )
+    fig_favc = px.bar(
+        favc_df,
+        x="FAVC",
+        y="Quantidade",
+        color="Obesity",
+        category_orders={"Obesity": ORDERED_CLASSES},
+        title="Consumo frequente de alimentos caloricos vs obesidade",
+        labels={"FAVC": "Consome alimentos caloricos com frequencia?"},
+        color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+    fig_favc.update_layout(barmode="stack", yaxis_title="Pacientes")
+    st.plotly_chart(fig_favc, use_container_width=True)
 
 st.caption(
     "Pacientes com baixa frequencia de atividade fisica e alto consumo de "
@@ -388,7 +342,7 @@ fig_imc_faixa = px.histogram(
     color="IMC_Faixa",
     nbins=40,
     title="Histograma de IMC com faixas clinicas",
-    color_discrete_sequence=px.colors.sequential.Viridis,
+    color_discrete_sequence=px.colors.sequential.Sunsetdark,
 )
 fig_imc_faixa.update_layout(xaxis_title="IMC", yaxis_title="Pacientes")
 st.plotly_chart(fig_imc_faixa, use_container_width=True)
@@ -398,91 +352,49 @@ st.divider()
 # -----------------------------------------------------------------------------
 # Historico familiar e meio de transporte
 # -----------------------------------------------------------------------------
-st.subheader("Fatores de contexto: histórico familiar e transporte")
+st.subheader("Fatores de contexto: historico familiar e transporte")
 
-# --- Gráfico de Histórico Familiar (Ocupando a tela inteira) ---
-df_fh = df_filt.copy()
-fh_labels = {"yes": "Sim", "no": "Não"}
+f1, f2 = st.columns(2)
 
-# Traduzindo os dados
-df_fh["Historico_Familiar"] = df_fh["family_history"].map(fh_labels)
-df_fh["Classificacao"] = df_fh["Obesity"].map(obesity_labels)
+with f1:
+    fh_df = (
+        df_filt.groupby(["family_history", "Obesity"]).size().reset_index(name="Quantidade")
+    )
+    fig_fh = px.bar(
+        fh_df,
+        x="family_history",
+        y="Quantidade",
+        color="Obesity",
+        category_orders={"Obesity": ORDERED_CLASSES},
+        title="Historico familiar de sobrepeso vs nivel de obesidade",
+        labels={"family_history": "Historico familiar?"},
+        color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+    fig_fh.update_layout(barmode="stack", yaxis_title="Pacientes")
+    st.plotly_chart(fig_fh, use_container_width=True)
 
-# Agrupando os dados limpos
-fh_grouped = df_fh.groupby(["Historico_Familiar", "Classificacao"]).size().reset_index(name="Quantidade")
-
-fig_fh = px.bar(
-    fh_grouped,
-    x="Historico_Familiar",
-    y="Quantidade",
-    color="Classificacao",
-    text="Quantidade", # Adiciona os rótulos numéricos
-    category_orders={
-        "Classificacao": ordered_labels_pt,
-        "Historico_Familiar": ["Não", "Sim"]
-    },
-    title="Histórico familiar de sobrepeso vs Nível de Obesidade",
-    color_discrete_sequence=px.colors.sequential.Viridis
-)
-
-fig_fh.update_layout(
-    barmode="group", 
-    xaxis_title="Possui Histórico Familiar?",
-    yaxis_title="Número de Pacientes",
-    legend_title="Categoria"
-)
-fig_fh.update_traces(textposition='auto', textfont_size=12, marker_line_width=0)
-st.plotly_chart(fig_fh, use_container_width=True)
-
-st.markdown("<br>", unsafe_allow_html=True) # Adiciona um respiro visual entre os gráficos
-
-# --- Gráfico de Meio de Transporte (Ocupando a tela inteira) ---
-df_mt = df_filt.copy()
-mt_labels = {
-    "Automobile": "Automóvel",
-    "Public_Transportation": "Transporte Público",
-    "Motorbike": "Moto",
-    "Bike": "Bicicleta",
-    "Walking": "A pé"
-}
-
-# Traduzindo os dados
-df_mt["Meio_Transporte"] = df_mt["MTRANS"].map(mt_labels)
-df_mt["Classificacao"] = df_mt["Obesity"].map(obesity_labels)
-
-mt_grouped = df_mt.groupby(["Meio_Transporte", "Classificacao"]).size().reset_index(name="Quantidade")
-
-# Definindo uma ordem lógica para o eixo X (dos motorizados para os ativos)
-ordered_mtrans = ["Automóvel", "Transporte Público", "Moto", "Bicicleta", "A pé"]
-
-fig_mt = px.bar(
-    mt_grouped,
-    x="Meio_Transporte",
-    y="Quantidade",
-    color="Classificacao",
-    text="Quantidade", # Adiciona os rótulos numéricos
-    category_orders={
-        "Classificacao": ordered_labels_pt,
-        "Meio_Transporte": ordered_mtrans
-    },
-    title="Meio de transporte habitual vs Nível de Obesidade",
-    color_discrete_sequence=px.colors.sequential.Viridis
-)
-
-fig_mt.update_layout(
-    barmode="group", 
-    xaxis_title="Meio de Transporte Habitual",
-    yaxis_title="Número de Pacientes",
-    legend_title="Categoria"
-)
-fig_mt.update_traces(textposition='auto', textfont_size=12, marker_line_width=0)
-st.plotly_chart(fig_mt, use_container_width=True)
+with f2:
+    mt_df = (
+        df_filt.groupby(["MTRANS", "Obesity"]).size().reset_index(name="Quantidade")
+    )
+    fig_mt = px.bar(
+        mt_df,
+        x="MTRANS",
+        y="Quantidade",
+        color="Obesity",
+        category_orders={"Obesity": ORDERED_CLASSES},
+        title="Meio de transporte habitual vs nivel de obesidade",
+        labels={"MTRANS": "Meio de transporte"},
+        color_discrete_sequence=px.colors.qualitative.Safe,
+    )
+    fig_mt.update_layout(barmode="stack", yaxis_title="Pacientes")
+    st.plotly_chart(fig_mt, use_container_width=True)
 
 st.caption(
-    "O histórico familiar aparece em alta proporção nas faixas mais elevadas "
-    "de obesidade, reforçando o fator genético. O meio de transporte ajuda "
-    "a indicar o nível de movimentação no dia a dia: deslocamentos a pé e "
-    "de bicicleta são menos frequentes nas classes mais graves."
+    "O historico familiar aparece em alta proporcao nas faixas mais elevadas "
+    "de obesidade, reforcando o fator genetico. O meio de transporte ajuda "
+    "a indicar o nivel de movimentacao no dia a dia: deslocamentos a pe e "
+    "de bicicleta sao menos frequentes nas classes mais graves."
 )
 
 st.divider()
@@ -490,51 +402,21 @@ st.divider()
 # -----------------------------------------------------------------------------
 # Correlacao numerica
 # -----------------------------------------------------------------------------
-st.subheader("Correlação entre variáveis numéricas")
-
-num_cols = ["Age", "Height", "Weight", "FCVC", "NCP", "CH2O", "FAF", "TUE", "imc", "Healthy_Score", "Sedentary_Index"]
-
-# 1. Dicionário para traduzir os eixos do gráfico para o usuário
-col_labels = {
-    "Age": "Idade",
-    "Height": "Altura",
-    "Weight": "Peso",
-    "FCVC": "Consumo de Vegetais",
-    "NCP": "Refeições por dia",
-    "CH2O": "Água diária",
-    "FAF": "Atividade Física",
-    "TUE": "Tempo em Telas",
-    "imc": "IMC",
-    "Healthy_Score": "Score Saudável",
-    "Sedentary_Index": "Índice Sedentário"
-}
-
-# Calcula a correlação
+st.subheader("Correlacao entre variaveis numericas")
+num_cols = ["Age", "Height", "Weight", "FCVC", "NCP", "CH2O", "FAF", "TUE", "imc",
+            "Healthy_Score", "Sedentary_Index"]
 corr = df_filt[num_cols].corr().round(2)
-
-# 2. Aplica a tradução nas linhas (index) e colunas
-corr = corr.rename(columns=col_labels, index=col_labels)
-
 fig_corr = px.imshow(
     corr,
     text_auto=True,
-    color_continuous_scale="Viridis",
-    title="Matriz de Correlação",
-    aspect="auto" # <-- Libera o Plotly para esticar os quadrados
+    color_continuous_scale="Blues",
+    title="Matriz de correlacao",
 )
-
-# 3. O "Pulo do Gato": Aumentar a altura e ajustar as margens
-fig_corr.update_layout(
-    height=800, # <-- Define uma altura imponente para a matriz (pode aumentar se quiser)
-    margin=dict(l=0, r=0, t=50, b=0) # Remove bordas brancas excessivas
-)
-
 st.plotly_chart(fig_corr, use_container_width=True)
-
 st.caption(
-    "IMC e peso têm correlação alta (esperado). Atividade Física e Índice Sedentário "
-    "apresentam relação inversa, e o Score Saudável capta uma combinação "
-    "positiva entre vegetais, hidratação e atividade física."
+    "IMC e peso tem correlacao alta (esperado). FAF e Sedentary_Index "
+    "apresentam relacao inversa, e o Healthy_Score capta uma combinacao "
+    "positiva entre vegetais, hidratacao e atividade fisica."
 )
 
 st.divider()
@@ -569,32 +451,18 @@ else:
 
     # Matriz de confusao do modelo escolhido.
     best_cm = metrics["results_by_model"][metrics["best_model"]]["confusion_matrix"]
-    
-    # 1. Traduzindo as classes usando o dicionário global que já criamos
-    translated_classes = [obesity_labels.get(c, c) for c in TARGET_CLASSES]
-    
-    cm_df = pd.DataFrame(best_cm, index=translated_classes, columns=translated_classes)
-    
-    # 2. Gerando o gráfico com paleta 'Blues' e aspect='auto'
+    cm_df = pd.DataFrame(best_cm, index=TARGET_CLASSES, columns=TARGET_CLASSES)
     fig_cm = px.imshow(
         cm_df,
         text_auto=True,
-        color_continuous_scale="Blues", # Deixa o fundo (zeros) branco/claro
-        title=f"Matriz de Confusão - {metrics['best_model']}",
+        color_continuous_scale="Blues",
+        title=f"Matriz de confusao - {metrics['best_model']}",
         labels={"x": "Predito", "y": "Real"},
-        aspect="auto" # Permite esticar a matriz
     )
-    
-    # 3. Ajustando a altura para o gráfico ficar imponente
-    fig_cm.update_layout(
-        height=700, 
-        margin=dict(l=0, r=0, t=50, b=0)
-    )
-    
     st.plotly_chart(fig_cm, use_container_width=True)
 
     st.caption(
-        "A matriz de confusão mostra que o modelo erra raramente, e quando "
+        "A matriz de confusao mostra que o modelo erra raramente, e quando "
         "erra, geralmente confunde classes adjacentes (por exemplo Sobrepeso "
-        "I com Sobrepeso II). Esse padrão reduz o risco de erros graves."
+        "I com Sobrepeso II). Esse padrao reduz o risco de erros graves."
     )

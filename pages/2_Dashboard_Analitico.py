@@ -122,11 +122,19 @@ ordered_labels_pt = [obesity_labels[c] for c in ORDERED_CLASSES]
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.header("Filtros")
+    
+    # 1. Dicionários rápidos para traduzir a interface dos filtros
+    gender_labels = {"Female": "Feminino", "Male": "Masculino"}
+    fh_labels = {"yes": "Sim", "no": "Não"}
+
+    # 2. Aplicando o format_func para mudar apenas a exibição
     selected_genders = st.multiselect(
-        "Genero",
+        "Gênero",
         options=sorted(df["Gender"].unique()),
         default=sorted(df["Gender"].unique()),
+        format_func=lambda x: gender_labels.get(x, x) # <--- O truque aqui!
     )
+    
     age_min, age_max = int(df["Age"].min()), int(df["Age"].max())
     age_range = st.slider(
         "Faixa de idade",
@@ -134,32 +142,25 @@ with st.sidebar:
         max_value=age_max,
         value=(age_min, age_max),
     )
+    
     selected_history = st.multiselect(
-        "Historico familiar de sobrepeso",
+        "Histórico familiar de sobrepeso",
         options=sorted(df["family_history"].unique()),
         default=sorted(df["family_history"].unique()),
+        format_func=lambda x: fh_labels.get(x, x) # <--- Aqui também!
     )
+    
     selected_classes = st.multiselect(
-        "Niveis de obesidade",
+        "Níveis de obesidade",
         options=ORDERED_CLASSES,
         default=ORDERED_CLASSES,
+        format_func=lambda x: obesity_labels.get(x, x) # <--- Usando o dicionário global
     )
+    
     st.caption(
-        "Os filtros se aplicam a todos os graficos abaixo. Limpe um filtro "
-        "para voltar a base completa."
+        "Os filtros se aplicam a todos os gráficos abaixo. Limpe um filtro "
+        "para voltar à base completa."
     )
-
-# Aplica os filtros.
-df_filt = df[
-    df["Gender"].isin(selected_genders)
-    & df["Age"].between(age_range[0], age_range[1])
-    & df["family_history"].isin(selected_history)
-    & df["Obesity"].isin(selected_classes)
-].copy()
-
-if df_filt.empty:
-    st.warning("Nenhum registro corresponde aos filtros selecionados.")
-    st.stop()
 
 
 # -----------------------------------------------------------------------------

@@ -188,30 +188,45 @@ st.divider()
 # -----------------------------------------------------------------------------
 # Distribuicao do alvo
 # -----------------------------------------------------------------------------
-st.subheader("Distribuicao da classe alvo")
+st.subheader("Distribuição da classe alvo")
+
+# 1. Conta os valores mantendo a estrutura original
 class_counts = (
     df_filt["Obesity"].value_counts().reindex(ORDERED_CLASSES).fillna(0).reset_index()
 )
 class_counts.columns = ["Classe", "Quantidade"]
+
+# 2. Traduz as classes para o português usando o dicionário global
+class_counts["Classe"] = class_counts["Classe"].map(obesity_labels)
+
 fig_classes = px.bar(
     class_counts,
     x="Classe",
     y="Quantidade",
     text="Quantidade",
-    title="Quantidade de pacientes por nivel de obesidade",
+    title="Quantidade de pacientes por nível de obesidade",
     color="Classe",
+    category_orders={"Classe": ordered_labels_pt}, # Garante a ordem visual correta
     color_discrete_sequence=px.colors.sequential.Viridis,
 )
+
 fig_classes.update_traces(textposition="outside", marker_line_width=0)
-fig_classes.update_layout(showlegend=False, xaxis_title="", yaxis_title="Pacientes")
+
+# 3. Ajuste do Layout: bargap para afinar as barras
+fig_classes.update_layout(
+    showlegend=False, 
+    xaxis_title="", 
+    yaxis_title="Pacientes",
+    bargap=0.4  # <-- Aumenta o espaço entre barras, deixando-as mais finas
+)
+
 st.plotly_chart(fig_classes, use_container_width=True)
+
 st.caption(
-    "O dataset eh relativamente equilibrado entre as classes, mas vale "
+    "O dataset é relativamente equilibrado entre as classes, mas vale "
     "observar que pacientes com sobrepeso e obesidade somados representam "
     "a maior parte da amostra."
 )
-
-st.divider()
 
 # -----------------------------------------------------------------------------
 # IMC por classe e por genero

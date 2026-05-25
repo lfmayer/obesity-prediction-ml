@@ -132,7 +132,7 @@ with st.sidebar:
         "Gênero",
         options=sorted(df["Gender"].unique()),
         default=sorted(df["Gender"].unique()),
-        format_func=lambda x: gender_labels.get(x, x) # <--- O truque aqui!
+        format_func=lambda x: gender_labels.get(x, x)
     )
     
     age_min, age_max = int(df["Age"].min()), int(df["Age"].max())
@@ -147,20 +147,33 @@ with st.sidebar:
         "Histórico familiar de sobrepeso",
         options=sorted(df["family_history"].unique()),
         default=sorted(df["family_history"].unique()),
-        format_func=lambda x: fh_labels.get(x, x) # <--- Aqui também!
+        format_func=lambda x: fh_labels.get(x, x)
     )
     
     selected_classes = st.multiselect(
         "Níveis de obesidade",
         options=ORDERED_CLASSES,
         default=ORDERED_CLASSES,
-        format_func=lambda x: obesity_labels.get(x, x) # <--- Usando o dicionário global
+        format_func=lambda x: obesity_labels.get(x, x)
     )
     
     st.caption(
         "Os filtros se aplicam a todos os gráficos abaixo. Limpe um filtro "
         "para voltar à base completa."
     )
+
+# --- TRECHO RECUPERADO: Aplica os filtros escolhidos na sidebar ---
+df_filt = df[
+    df["Gender"].isin(selected_genders)
+    & df["Age"].between(age_range[0], age_range[1])
+    & df["family_history"].isin(selected_history)
+    & df["Obesity"].isin(selected_classes)
+].copy()
+
+if df_filt.empty:
+    st.warning("Nenhum registro corresponde aos filtros selecionados.")
+    st.stop()
+# -----------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
@@ -228,6 +241,8 @@ st.caption(
     "observar que pacientes com sobrepeso e obesidade somados representam "
     "a maior parte da amostra."
 )
+
+st.divider()
 
 # -----------------------------------------------------------------------------
 # IMC por classe e por genero
@@ -469,6 +484,9 @@ st.caption(
     "a indicar o nível de movimentação no dia a dia: deslocamentos a pé e "
     "de bicicleta são menos frequentes nas classes mais graves."
 )
+
+st.divider()
+
 # -----------------------------------------------------------------------------
 # Correlacao numerica
 # -----------------------------------------------------------------------------
@@ -518,6 +536,8 @@ st.caption(
     "apresentam relação inversa, e o Score Saudável capta uma combinação "
     "positiva entre vegetais, hidratação e atividade física."
 )
+
+st.divider()
 
 # -----------------------------------------------------------------------------
 # Qualidade do modelo

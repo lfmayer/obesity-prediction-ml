@@ -456,24 +456,52 @@ st.caption(
 # -----------------------------------------------------------------------------
 # Correlacao numerica
 # -----------------------------------------------------------------------------
-st.subheader("Correlacao entre variaveis numericas")
-num_cols = ["Age", "Height", "Weight", "FCVC", "NCP", "CH2O", "FAF", "TUE", "imc",
-            "Healthy_Score", "Sedentary_Index"]
+st.subheader("Correlação entre variáveis numéricas")
+
+num_cols = ["Age", "Height", "Weight", "FCVC", "NCP", "CH2O", "FAF", "TUE", "imc", "Healthy_Score", "Sedentary_Index"]
+
+# 1. Dicionário para traduzir os eixos do gráfico para o usuário
+col_labels = {
+    "Age": "Idade",
+    "Height": "Altura",
+    "Weight": "Peso",
+    "FCVC": "Consumo de Vegetais",
+    "NCP": "Refeições por dia",
+    "CH2O": "Água diária",
+    "FAF": "Atividade Física",
+    "TUE": "Tempo em Telas",
+    "imc": "IMC",
+    "Healthy_Score": "Score Saudável",
+    "Sedentary_Index": "Índice Sedentário"
+}
+
+# Calcula a correlação
 corr = df_filt[num_cols].corr().round(2)
+
+# 2. Aplica a tradução nas linhas (index) e colunas
+corr = corr.rename(columns=col_labels, index=col_labels)
+
 fig_corr = px.imshow(
     corr,
     text_auto=True,
     color_continuous_scale="Viridis",
-    title="Matriz de correlacao",
-)
-st.plotly_chart(fig_corr, use_container_width=True)
-st.caption(
-    "IMC e peso tem correlacao alta (esperado). FAF e Sedentary_Index "
-    "apresentam relacao inversa, e o Healthy_Score capta uma combinacao "
-    "positiva entre vegetais, hidratacao e atividade fisica."
+    title="Matriz de Correlação",
+    aspect="auto" # <-- Libera o Plotly para esticar os quadrados
 )
 
-st.divider()
+# 3. O "Pulo do Gato": Aumentar a altura e ajustar as margens
+fig_corr.update_layout(
+    height=800, # <-- Define uma altura imponente para a matriz (pode aumentar se quiser)
+    margin=dict(l=0, r=0, t=50, b=0) # Remove bordas brancas excessivas
+)
+
+st.plotly_chart(fig_corr, use_container_width=True)
+
+st.caption(
+    "IMC e peso têm correlação alta (esperado). Atividade Física e Índice Sedentário "
+    "apresentam relação inversa, e o Score Saudável capta uma combinação "
+    "positiva entre vegetais, hidratação e atividade física."
+)
 
 # -----------------------------------------------------------------------------
 # Qualidade do modelo

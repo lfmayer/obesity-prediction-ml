@@ -247,21 +247,68 @@ st.subheader("Habitos de vida e nivel de obesidade")
 h1, h2 = st.columns(2)
 
 with h1:
-    # Proporcao de obesidade por nivel de atividade fisica.
-    faf_df = (
-        df_filt.groupby(["FAF", "Obesity"]).size().reset_index(name="Quantidade")
-    )
+    # 1. Dicionários de tradução
+    obesity_labels = {
+        "Insufficient_Weight": "Abaixo do Peso",
+        "Normal_Weight": "Peso Normal",
+        "Overweight_Level_I": "Sobrepeso I",
+        "Overweight_Level_II": "Sobrepeso II",
+        "Obesity_Type_I": "Obesidade Grau I",
+        "Obesity_Type_II": "Obesidade Grau II",
+        "Obesity_Type_III": "Obesidade Grau III"
+    }
+
+    faf_labels = {
+        0: "0 (Nenhuma)",
+        1: "1 a 2 dias",
+        2: "3 a 4 dias",
+        3: "5+ dias"
+    }
+
+    # 2. Preparação dos dados
+    # Criamos uma cópia para não poluir o df_filt usado nos outros gráficos
+    df_h1 = df_filt.copy()
+    
+    # Arredondamos e mapeamos os valores
+    df_h1["Atividade_Fisica"] = df_h1["FAF"].round().astype(int).map(faf_labels)
+    df_h1["Classificacao"] = df_h1["Obesity"].map(obesity_labels)
+
+    # Agrupamento usando as categorias já limpas
+    faf_df = df_h1.groupby(["Atividade_Fisica", "Classificacao"]).size().reset_index(name="Quantidade")
+
+    # A lista de ordem usa a constante ORDERED_CLASSES já definida no topo do seu arquivo
+    ordered_labels_pt = [obesity_labels[c] for c in ORDERED_CLASSES]
+
+    # 3. Geração do gráfico
     fig_faf = px.bar(
         faf_df,
-        x="FAF",
+        x="Atividade_Fisica",
         y="Quantidade",
-        color="Obesity",
-        category_orders={"Obesity": ORDERED_CLASSES},
-        title="Frequencia de atividade fisica vs nivel de obesidade",
-        labels={"FAF": "Atividade fisica semanal (0=nenhuma, 3=5x+)"},
-        color_discrete_sequence=px.colors.qualitative.Safe,
+        color="Classificacao",
+        text="Quantidade", # Adiciona os valores em cada barra
+        category_orders={
+            "Classificacao": ordered_labels_pt, 
+            "Atividade_Fisica": list(faf_labels.values())
+        },
+        title="Frequência de Atividade Física vs Nível de Obesidade",
+        color_discrete_sequence=px.colors.sequential.Viridis
     )
-    fig_faf.update_layout(barmode="stack", yaxis_title="Pacientes")
+
+    # 4. Ajustes de layout e formatação das barras
+    fig_faf.update_layout(
+        barmode="group", 
+        xaxis_title="Frequência Semanal",
+        yaxis_title="Número de Pacientes",
+        legend_title="Categoria"
+    )
+
+    fig_faf.update_traces(
+        textposition='auto',
+        textfont_size=12,
+        marker_line_width=0 # Deixa a barra "lisa"
+    )
+
+    # 5. Renderização no Streamlit
     st.plotly_chart(fig_faf, use_container_width=True)
 
 with h2:

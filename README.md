@@ -1,5 +1,7 @@
 # Obesity Risk Prediction — End-to-End Machine Learning System
 
+> 🇧🇷 [Versão em português disponível aqui](README_PT.md)
+
 A supervised multi-class classification system that identifies obesity risk levels across **7 clinical categories** based on dietary habits, physical activity, and lifestyle data. The trained pipeline is served through a no-code interactive web application built with Streamlit.
 
 **Live demo:** https://fiap-tc4-obesidade-jdhk9vfrpcjj9g5uzwh6xg.streamlit.app/
